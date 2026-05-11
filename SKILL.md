@@ -25,14 +25,14 @@ description: 通过 MCP 工具调用 MuseDAM 开放接口，完成素材检索/�
 | 能力 | 工具名 | 典型用途 |
 |------|--------|----------|
 | 素材检索 | `musedam_search_assets` | 按目录、关键词、标签、尺寸、时间等检索素材 |
-| 素材上传 | `musedam_upload_assets` | 通过 URL 将素材写入 DAM（需 `assets_json`） |
+| 素材上传 | `musedam_upload_assets` | 通过 URL 将素材写入 DAM（需 `assets` 数组） |
 | 素材修改 | `musedam_modify_assets` | 改名称、描述、评分、元数据、链接、标签 |
 | 素材移动 | `musedam_move_assets_to_folder` | 批量移动或添加到文件夹（`to_folder_id`、`operation_type`） |
 | 素材详情 | `musedam_assets_by_ids` | 按素材 ID 列表批量取详情 |
 | 分享检索 | `musedam_search_share` | 按分享链接查素材（需 `link_token`，有提取码时传 `password`） |
 | 标签树 | `musedam_query_tag_tree` | 获取企业标签树 |
 | 标签列表 | `musedam_enterprise_tag_list` | 企业标签分页（`page_num`/`page_size`/keyword/type 等） |
-| 标签合并 | `musedam_merge_tags` | 批量创建/更新/删除标签（`tags_json`） |
+| 标签合并 | `musedam_merge_tags` | 批量创建/更新/删除标签（`tags` 数组） |
 | 设置标签 | `musedam_set_assets_tags` | 为素材批量设置标签（`tag_ids`+`asset_ids`，`remove` 是否先清空） |
 | 文件夹路径 | `musedam_folder_path` | 根据 `folder_ids` 取完整路径 |
 | 子文件夹 | `musedam_get_sub_folder_ids` | 递归取某文件夹下所有子文件夹 ID |
@@ -57,13 +57,13 @@ description: 通过 MCP 工具调用 MuseDAM 开放接口，完成素材检索/�
 
 ### 2. 上传素材（URL 入库）
 
-- 使用 `musedam_upload_assets`，参数 `assets_json` 为 **JSON 数组字符串**（单次最多 50 条）。
-- 每项至少包含：`url`（必填）、`extension`（必填）；可选：`folderIds`、`name`、`size`/`width`/`height`/`duration`、`link`、`description`、**`rating`**（评分）、`oldAssetId`、**`metadatas`**（上传：`fieldId`+`value`）。仍写 `score` 时会自动映射为 `rating`。
+- 使用 `musedam_upload_assets`，参数 **`assets`** 为数组（单次最多 50 条）。
+- 每项至少包含：`url`（必填）、`extension`（必填）；可选：`folderIds`、`name`、`size`/`width`/`height`/`duration`、`link`、`description`、**`rating`**（评分）、`oldAssetId`、**`metadatas`**（上传：`fieldId`+`value`）、`skipDuplicateByEtag`。仍写 `score` 时会自动映射为 `rating`；返回每条可有 `uploadResult`（`NEW` / `DUPLICATE_BY_ETAG`）。其余与开放接口一致。
 - 示例：`[{"folderIds":[23015],"url":"https://example.com/img.jpg","name":"示例图","extension":"jpeg"}]`
 
 ### 3. 修改素材
 
-- 使用 `musedam_modify_assets`，必填 `asset_id`；可选 `name`、`description`、**`rating`**（评分）、`link`、`tags`（覆盖式设置）、**`metadatas_json`**（`[{"name":"字段名","value":"..."}]`，与修改接口一致）。
+- 使用 `musedam_modify_assets`，必填 `asset_id`；可选 `name`、`description`、**`rating`**（评分）、`link`、`tags`（覆盖式设置）、**`metadatas`**（`[{"name":"字段名","value":"..."}]`，与修改接口一致）。
 - 兼容：仍可传 `score`，与 `rating` 同时存在时以 `rating` 为准。
 
 ### 3.1 移动或添加素材到文件夹
@@ -90,7 +90,7 @@ description: 通过 MCP 工具调用 MuseDAM 开放接口，完成素材检索/�
 ## 错误与注意
 
 - 工具返回的 JSON 中若含 `"error": "..."`，表示调用或 API 失败，应解析后向用户说明或重试。
-- `assets_json`、`tags_json` 必须是合法 JSON 字符串；复杂结构建议先构建对象再 `JSON.stringify`。
+- 复杂参数以 MCP 工具 schema 为准；若以 JSON 字符串传递结构，须合法可解析。
 - 分页时 `start_point`/`end_point` 为左闭右开区间；单次不宜请求过多条（如 `end_point - start_point` 建议不超过几十）。
 
 ## 更多参数说明

@@ -47,10 +47,11 @@
 
 将素材上传到 DAM（单次最多 50 条）。
 
-- **assets_json**（str，必填）：JSON 数组。每项字段：
+- **assets**（array，必填）：每项字段：
   - **url**（必填）、**extension**（必填）
-  - 可选：folderIds, name, size, width, height, duration, link, description, **rating**, oldAssetId, **metadatas**（上传：`fieldId` + `value`，与元数据 fields 接口 id 一致）
+  - 可选：folderIds, name, size, width, height, duration, link, description, **rating**, oldAssetId, **metadatas**（上传：`fieldId` + `value`，与元数据 fields 接口 id 一致）, skipDuplicateByEtag
   - 若使用旧字段 **score**，服务端请求前会映射为 **rating**
+- 返回每条可含 uploadResult：NEW、DUPLICATE_BY_ETAG（详见开放接口文档）
 
 ---
 
@@ -60,7 +61,7 @@
 
 - **asset_id**（int，必填）
 - 可选：name, description, **rating**（评分）, **score**（兼容旧参数，与 rating 同时传时以 rating 为准）, link, tags(list[int])
-- **metadatas_json**（str，可选）：JSON 数组，`[{"name":"字段名","value":...}]`（修改接口用 **name+value**，不用 fieldId）
+- **metadatas**（list[dict]，可选）：元数据数组，`[{"name":"字段名","value":...}]`（修改接口用 **name+value**，不用 fieldId）
 
 ---
 
@@ -109,7 +110,7 @@
 
 批量合并企业标签。
 
-- **tags_json**（str）：标签树 JSON。每项含 name, id(可选), operation(0 不操作 1 更新 2 创建 3 删除), sort(可选), children(可选)
+- **tags**（list[dict]，必填）：标签树数组。每项含 name, id(可选), operation(0 不操作 1 更新 2 创建 3 删除), sort(可选), children(可选)
 
 ---
 
@@ -130,7 +131,7 @@
 - **page_num**（int，默认 1）、**page_size**（int，默认 500）、**parent_id**（int，默认 0）
 - **keyword**（str，可选）
 - **tag_type**（int，可选）：0 普通 / 1 智能
-- **extra_json**（str，可选）：JSON 对象，合并到请求体（挂载资产数量等以服务端 `EnterpriseTagReq` 字段名为准）
+- **extra**（dict，可选）：额外的请求参数字典，合并到请求体（挂载资产数量等以服务端 `EnterpriseTagReq` 字段名为准）
 
 ---
 
