@@ -9,7 +9,7 @@ description: 通过 MuseDAM MCP 检索和管理素材、文件夹、标签、团
 
 ## 选择工具
 
-使用 `tools/list` 获取已连接服务的当前工具与 schema，再按任务选择。公开工具参考包含 70 个工具，详见 [reference.md](reference.md) 的名称、用途与参数快照。第三方应用 API Key 创建、刷新、撤销不在此范围。
+使用 `tools/list` 获取已连接服务的当前工具与 schema，再按任务选择。公开工具参考包含 72 个工具，详见 [reference.md](reference.md) 的名称、用途与参数快照。第三方应用 API Key 创建、刷新、撤销不在此范围。
 
 原有工具使用顶层参数；新增带参数工具使用 `params` 对象，其中字段保持 camelCase。无参数工具使用 `{}`。不要为审批或商品库工具传 `service`，该值由各工具固定。
 
@@ -28,3 +28,9 @@ description: 通过 MuseDAM MCP 检索和管理素材、文件夹、标签、团
 ## 结果处理
 
 检查 MCP isError 和返回内容中的 error；失败不应报告成功。保留数值、布尔、列表和空值的语义。参数、权限、模块未开通错误先修正原因，不盲目重试写入。商品同步跟随 nextCursor，全部完成后保存 syncedUntil，按 id 与 updatedAt 去重。
+
+## 2026-10-22 接口更新
+
+- 以图搜图：`musedam_search_by_image` 使用 `params`，图片来源至少一个：imageBase64、searchMaterialId、imagePublicUrl，优先级按此顺序。支持纯 base64 和 data URI。仅付费团队；endPoint > 1000 返回空结果；筛选和响应与素材检索一致。params.region 是图片框选区域，不是连接的区域配置。
+- 角色成员：`musedam_role_members_query`，例如 `{"params":{"roleId":12,"keyWord":"张","page":1,"pageSize":10}}`，返回 records/total/current/size，成员带 roleId，手机号脱敏。
+- 团队成员、部门、部门成员及角色成员查询只允许管理员类型 API Key：企业版角色 code 为 content；非企业版 API Key 视为管理员，否则返回 50083。遇到此错误需调整 Key 权限，不应重复尝试或更换用户字段绕过。

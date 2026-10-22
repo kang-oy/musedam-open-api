@@ -1,6 +1,6 @@
 # MCP 工具参数参考
 
-同步于 2026-10-21，共 70 个公开工具。调用前读取服务端 schema；以下为当前版本快照。
+同步于 2026-10-22，共 72 个公开工具。调用前读取服务端 schema；以下为当前版本快照。
 
 ## musedam_search_assets
 
@@ -12,7 +12,7 @@
     keyword_search_type: DEEP 深度（默认）、DEFAULT 默认、PRECISE 精准、DEEP_AND_PRECISE 深度和精准。
     spatial_region: 对应接口 region 字段（区域多边形等，List<Float>）。
     w/h/mode/q/f/bg: 团队开通 DAT 且资产有公开链时用于 publicUrl 的 OSS 处理参数；未开通时可能不生效。
-    
+
 
 ```json
 {
@@ -514,7 +514,7 @@
     可选 folderIds、name、size、width、height、duration、link、description、rating、oldAssetId、metadatas（上传用 fieldId+value）、skipDuplicateByEtag、userId、licenseAgreementIds、startTime、endTime、isPermanent。
     若仍使用旧字段 score，会自动映射为接口的 rating。返回每条可含 uploadResult（NEW / DUPLICATE_BY_ETAG）；其余与开放接口一致。
     示例: [{"folderIds":[23015],"url":"https://...","name":"测试图片","extension":"jpeg"}]
-    
+
 
 ```json
 {
@@ -648,7 +648,7 @@
 
 修改素材基本信息。score 为评分；rating 仅兼容旧 MCP 调用，与 score 同时传时以 score 为准。
     metadatas: 元数据数组，元素为 {"name":"字段名","value":...}（修改接口用 name+value，非上传场景的 fieldId）。
-    
+
 
 ```json
 {
@@ -761,7 +761,7 @@
     将一批资产移动或添加到目标文件夹（POST /move-assets-to-folder）。asset_ids 单次最多 200 条。
     operation_type: 0=移动（从 from_folder_id 解除后加入 to_folder_id，此时 from_folder_id 必填且大于 0）；
     1=添加（保留源文件夹关系并加入目标，from_folder_id 可不传）。
-    
+
 
 ```json
 {
@@ -960,7 +960,7 @@
 
 
     批量合并企业标签。tags 为标签树数组，每项含 name, id(可选), operation(0不操作 1更新 2创建 3删除), sort(可选), children(可选)。
-    
+
 
 ```json
 {
@@ -1274,7 +1274,7 @@
 
     获取素材原图处理后的公开链接（需开通 DAT）。指定 w/h 时才会附带 mode（fit=等比缩放, crop=居中裁剪）。
     f: jpg/jpeg/png/webp。bg 为 HEX（可含或不含 #，与服务端一致）。
-    
+
 
 ```json
 {
@@ -1370,7 +1370,7 @@
 
     分页获取企业标签列表（POST /enterprise-tag-list）。tag_type: 0 普通 / 1 智能（与开放接口 EnterpriseTagReq 一致）。
     extra: 可选，额外的请求参数字典，合并到请求体（挂载数量等字段以服务端 EnterpriseTagReq 为准）。
-    
+
 
 ```json
 {
@@ -1429,6 +1429,305 @@
     }
   },
   "title": "musedam_enterprise_tag_listArguments",
+  "type": "object"
+}
+```
+
+## musedam_search_by_image
+
+以图搜图，仅付费团队可用。至少提供一个图片来源；优先级 imageBase64 > searchMaterialId > imagePublicUrl。base64 支持纯内容或 data:image/xxx;base64, 前缀。筛选、分页、响应与素材检索一致，按相似度排序；endPoint > 1000 返回空结果。region 为图中框选区域。
+
+```json
+{
+  "properties": {
+    "params": {
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "properties": {
+            "imageBase64": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "imageBase64"
+          ]
+        },
+        {
+          "properties": {
+            "searchMaterialId": {
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "searchMaterialId"
+          ]
+        },
+        {
+          "properties": {
+            "imagePublicUrl": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "imagePublicUrl"
+          ]
+        }
+      ],
+      "properties": {
+        "parentId": {
+          "description": "指定搜索目录（不包括根目录），包含所有子孙",
+          "type": "integer"
+        },
+        "needChildren": {
+          "description": "是否需要子级目录下的素材，默认 false",
+          "type": "boolean"
+        },
+        "extensions": {
+          "description": "文件类型扩展名",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "color": {
+          "description": "颜色",
+          "type": "string"
+        },
+        "areaThreshold": {
+          "description": "颜色占比，默认 20",
+          "type": "integer"
+        },
+        "colorThreshold": {
+          "description": "颜色精准度，默认 20",
+          "type": "integer"
+        },
+        "minLength": {
+          "description": "最小时长（视频、音频），单位 ms",
+          "type": "integer"
+        },
+        "maxLength": {
+          "description": "最大时长（视频、音频），单位 ms",
+          "type": "integer"
+        },
+        "minSize": {
+          "description": "最小文件大小，单位 B",
+          "type": "integer"
+        },
+        "maxSize": {
+          "description": "最大文件大小，单位 B",
+          "type": "integer"
+        },
+        "minHeight": {
+          "description": "最小图片高度，单位 px",
+          "type": "integer"
+        },
+        "maxHeight": {
+          "description": "最大图片高度，单位 px",
+          "type": "integer"
+        },
+        "minWidth": {
+          "description": "最小图片宽度，单位 px",
+          "type": "integer"
+        },
+        "maxWidth": {
+          "description": "最大图片宽度，单位 px",
+          "type": "integer"
+        },
+        "startTime": {
+          "description": "开始时间（更新时间范围）",
+          "type": "integer"
+        },
+        "endTime": {
+          "description": "结束时间（更新时间范围）",
+          "type": "integer"
+        },
+        "keywords": {
+          "description": "搜索关键字",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "tags": {
+          "description": "标签 ID 列表",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "tagOrAnd": {
+          "description": "标签筛选 or/and，true=and，默认 true",
+          "type": "boolean"
+        },
+        "createUsers": {
+          "description": "创建人 ID 列表",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "ratings": {
+          "description": "评分列表（即 scores）",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "hasLink": {
+          "description": "是否有链接",
+          "type": "boolean"
+        },
+        "link": {
+          "description": "输入链接",
+          "type": "string"
+        },
+        "hasDesc": {
+          "description": "是否有备注",
+          "type": "boolean"
+        },
+        "desc": {
+          "description": "输入备注",
+          "type": "string"
+        },
+        "startPoint": {
+          "description": "分页开始索引，默认 0",
+          "type": "integer"
+        },
+        "endPoint": {
+          "description": "分页结束索引，默认 10",
+          "type": "integer"
+        },
+        "region": {
+          "description": "查询图上的框选区域，不是连接的国内/海外 region。",
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        },
+        "customFieldTemplateIds": {
+          "description": "自定义字段模板 ID 列表",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "customFieldId": {
+          "description": "自定义字段 ID",
+          "type": "integer"
+        },
+        "currentUserId": {
+          "description": "仅搜索该用户有权限的素材",
+          "type": "integer"
+        },
+        "w": {
+          "description": "目标宽度（px），范围 1–6000；用于生成返回中的 publicUrl； 超过原图参数无效",
+          "type": "integer"
+        },
+        "h": {
+          "description": "目标高度（px），范围 1–6000；用于生成返回中的 publicUrl； 超过原图参数无效",
+          "type": "integer"
+        },
+        "mode": {
+          "description": "缩放模式：fit-等比缩放，crop-居中裁剪；用于生成 publicUrl，默认 fit",
+          "type": "string"
+        },
+        "q": {
+          "description": "输出质量，范围 1–100；用于生成 publicUrl",
+          "type": "integer"
+        },
+        "f": {
+          "description": "输出格式：jpg / png / webp；用于生成 publicUrl",
+          "type": "string"
+        },
+        "bg": {
+          "description": "背景填充色（HEX，不含 #）；用于生成 publicUrl",
+          "type": "string"
+        },
+        "keywordSearchType": {
+          "description": "搜索类型：*DEEP(深度搜索 默认)，DEFAULT（站内默认搜索)，PRECISE（精准搜索） DEEP_AND_PRECISE(深度和精准)*",
+          "type": "string"
+        },
+        "sort": {
+          "additionalProperties": false,
+          "properties": {
+            "sortName": {
+              "type": "string"
+            },
+            "sortType": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "sortName"
+          ],
+          "type": "object"
+        },
+        "searchMaterialId": {
+          "type": "integer"
+        },
+        "imagePublicUrl": {
+          "type": "string"
+        },
+        "imageBase64": {
+          "type": "string"
+        }
+      },
+      "title": "Params",
+      "type": "object"
+    }
+  },
+  "required": [
+    "params"
+  ],
+  "title": "musedam_search_by_imageArguments",
+  "type": "object"
+}
+```
+
+## musedam_role_members_query
+
+查询角色成员，默认 page=1/pageSize=10；响应 records/total/current/size，成员含 roleId，手机号脱敏。仅管理员类型 API Key 可调用：企业版对应角色 code 为 content；非企业版 API Key 视为管理员。不满足条件返回 50083。
+
+```json
+{
+  "properties": {
+    "params": {
+      "additionalProperties": false,
+      "properties": {
+        "roleId": {
+          "description": "",
+          "type": "integer"
+        },
+        "keyWord": {
+          "description": "",
+          "type": "string"
+        },
+        "page": {
+          "description": "页码，默认 1",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "pageSize": {
+          "description": "每页数量",
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "roleId"
+      ],
+      "title": "Params",
+      "type": "object"
+    }
+  },
+  "required": [
+    "params"
+  ],
+  "title": "musedam_role_members_queryArguments",
   "type": "object"
 }
 ```
@@ -1913,7 +2212,7 @@
 
 ## musedam_org_members_query
 
-分页查询团队成员；默认 page=1/pageSize=10，支持部门和成员状态筛选。
+分页查询团队成员；默认 page=1/pageSize=10，支持部门和成员状态筛选。仅管理员类型 API Key 可调用：企业版对应角色 code 为 content；非企业版 API Key 视为管理员。不满足条件返回 50083。
 
 ```json
 {
@@ -2024,7 +2323,7 @@
 
 ## musedam_org_departments_query
 
-查询团队部门列表。
+查询团队部门列表。仅管理员类型 API Key 可调用：企业版对应角色 code 为 content；非企业版 API Key 视为管理员。不满足条件返回 50083。
 
 ```json
 {
@@ -2080,7 +2379,7 @@
 
 ## musedam_department_members_query
 
-按部门查询成员；needChildMember 指定是否含子部门，默认 false。
+按部门查询成员；needChildMember 指定是否含子部门，默认 false。仅管理员类型 API Key 可调用：企业版对应角色 code 为 content；非企业版 API Key 视为管理员。不满足条件返回 50083。
 
 ```json
 {
@@ -4503,4 +4802,3 @@ List team download history. Lists records from every browser actor and API key i
   "type": "object"
 }
 ```
-
